@@ -82,6 +82,8 @@ public class LuaLoader implements JavaFunction, CoronaRuntimeListener {
 			new InitWrapper(),
 			new ShowBannerWrapper(),
 			new HideBannerWrapper(),
+			new ShowInterstitialWrapper(),
+			new ShowRewardedVideo(),
 		};
 		String libName = L.toString( 1 );
 		L.register(libName, luaFunctions);
@@ -208,7 +210,9 @@ public class LuaLoader implements JavaFunction, CoronaRuntimeListener {
 					return;
 				}
 
-				Yodo1Advert.initSDK(activity, "MVWzsjaJDO9");
+				String sdkCode = "MVWzsjaJDO9";
+
+				Yodo1Advert.initSDK(activity, sdkCode);
 				dispatchEvent("Init successfully");
 
 				if ( CoronaLua.isListener( L, listenerIndex, EVENT_NAME ) ) {
@@ -313,6 +317,114 @@ public class LuaLoader implements JavaFunction, CoronaRuntimeListener {
 		return 0;
 	}
 
+    @SuppressWarnings("WeakerAccess")
+    public int showInterstitial(LuaState L) {
+        CoronaActivity activity = CoronaEnvironment.getCoronaActivity();
+        if (activity == null) {
+            return 0;
+        }
+
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                CoronaActivity activity = CoronaEnvironment.getCoronaActivity();
+                if (activity == null) {
+                    return;
+                }
+
+                boolean hasAds = Yodo1Advert.interstitialIsReady(activity);
+
+                if (hasAds) {
+                    Yodo1Advert.showInterstitial(activity, new InterstitialCallback() {
+
+                        @Override
+                        public void onInterstitialClosed() {
+                            String message = "InterstitialCallback onInterstitialClosed";
+                            dispatchEvent(message);
+                        }
+
+                        @Override
+                        public void onInterstitialShowSucceeded() {
+                            String message = "InterstitialCallback onInterstitialShowSucceeded";
+                            dispatchEvent(message);
+                        }
+
+                        @Override
+                        public void onInterstitialShowFailed(AdErrorCode adErrorCode) {
+                            String message = "InterstitialCallback onInterstitialShowFailed, adErrorCode: "
+                                    + adErrorCode;
+                            dispatchEvent(message);
+                        }
+
+                        @Override
+                        public void onInterstitialClicked() {
+                            String message = "InterstitialCallback onInterstitialClicked";
+                            dispatchEvent(message);
+                        }
+                    });
+                } else {
+                    String message = "ShowFailed";
+                    dispatchEvent(message);
+                }
+            }
+        } );
+
+        return 0;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public int showRewardedVideo(LuaState L) {
+        CoronaActivity activity = CoronaEnvironment.getCoronaActivity();
+        if (activity == null) {
+            return 0;
+        }
+
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                CoronaActivity activity = CoronaEnvironment.getCoronaActivity();
+                if (activity == null) {
+                    return;
+                }
+
+                boolean hasAds = Yodo1Advert.videoIsReady(activity);
+                if (hasAds) {
+                    Yodo1Advert.showVideo(activity, new VideoCallback() {
+
+                        @Override
+                        public void onVideoClosed(boolean isFinished) {
+                            String message = "VideoCallback onVideoClosed, isFinished: " + isFinished;
+                            dispatchEvent(message);
+                        }
+
+                        @Override
+                        public void onVideoShow() {
+                            String message = "VideoCallback onVideoShow";
+                            dispatchEvent(message);
+                        }
+
+                        @Override
+                        public void onVideoShowFailed(AdErrorCode errorCode) {
+                            String message = "VideoCallback onVideoShowFailed, errorCode: " + errorCode;
+                            dispatchEvent(message);
+                        }
+
+                        @Override
+                        public void onVideoClicked() {
+                            String message = "VideoCallback onVideoClicked";
+                            dispatchEvent(message);
+                        }
+                    });
+                } else {
+                    String message = "ShowFailed";
+                    dispatchEvent(message);
+                }
+            }
+        } );
+
+        return 0;
+    }
+
 	/** Implements the library.init() Lua function. */
 	@SuppressWarnings("unused")
 	private class InitWrapper implements NamedJavaFunction {
@@ -342,49 +454,51 @@ public class LuaLoader implements JavaFunction, CoronaRuntimeListener {
 	/** Implements the library.showBanner() Lua function. */
 	@SuppressWarnings("unused")
 	private class ShowBannerWrapper implements NamedJavaFunction {
-		/**
-		 * Gets the name of the Lua function as it would appear in the Lua script.
-		 * @return Returns the name of the custom Lua function.
-		 */
 		@Override
 		public String getName() {
-			return "show";
+			return "showBanner";
 		}
-		
-		/**
-		 * This method is called when the Lua function is called.
-		 * <p>
-		 * Warning! This method is not called on the main UI thread.
-		 * @param L Reference to the Lua state.
-		 *                 Needed to retrieve the Lua function's parameters and to return values back to Lua.
-		 * @return Returns the number of values to be returned by the Lua function.
-		 */
+
 		@Override
 		public int invoke(LuaState L) {
 			return showBanner(L);
 		}
 	}
 
+    /** Implements the library.showInterstitial() Lua function. */
+    @SuppressWarnings("unused")
+    private class ShowInterstitialWrapper implements NamedJavaFunction {
+        @Override
+        public String getName() {
+            return "showInterstitial";
+        }
+
+        @Override
+        public int invoke(LuaState L) {
+            return showInterstitial(L);
+        }
+    }
+
+    /** Implements the library.showRewardedVideo() Lua function. */
+    @SuppressWarnings("unused")
+    private class ShowRewardedVideo implements NamedJavaFunction {
+        @Override
+        public String getName() { return "showRewardedVideo"; }
+
+        @Override
+        public int invoke(LuaState L) {
+            return showRewardedVideo(L);
+        }
+    }
+
 	/** Implements the library.hideBanner() Lua function. */
 	@SuppressWarnings("unused")
 	private class HideBannerWrapper implements NamedJavaFunction {
-		/**
-		 * Gets the name of the Lua function as it would appear in the Lua script.
-		 * @return Returns the name of the custom Lua function.
-		 */
 		@Override
 		public String getName() {
-			return "show";
+			return "hideBanner";
 		}
 
-		/**
-		 * This method is called when the Lua function is called.
-		 * <p>
-		 * Warning! This method is not called on the main UI thread.
-		 * @param L Reference to the Lua state.
-		 *                 Needed to retrieve the Lua function's parameters and to return values back to Lua.
-		 * @return Returns the number of values to be returned by the Lua function.
-		 */
 		@Override
 		public int invoke(LuaState L) {
 			return hideBanner(L);
