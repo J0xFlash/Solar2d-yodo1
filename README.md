@@ -34,9 +34,9 @@ settings =
 ```lua
 local yodo1 = require 'plugin.yodo1'
 
-local function Yodo1Listener(event) { -- event.name = "yodo1"
+local function Yodo1Listener(event) -- event.name = "yodo1"
     print("Yodo Event", event.type, event.phase, event.isError and event.errorType)
-}
+end
 
 yodo1.init(Yodo1Listener, {
     appKey = 'aaabbbccc',
