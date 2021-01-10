@@ -1,5 +1,4 @@
-*.iml
-/local.properties
-**/.idea/**
-.DS_Store
-**/build/**
+plugins/*.tgz
+.gradle/
+*.hprof
+data.tgz
